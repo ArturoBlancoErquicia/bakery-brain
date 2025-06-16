@@ -58,7 +58,7 @@ export default function SidebarNav() {
 
         return (
           <SidebarMenuItem key={item.id}>
-            <Link href={item.href} passHref legacyBehavior>
+            <Link href={item.href}>
               <SidebarMenuButton
                 asChild
                 isActive={isActive}
