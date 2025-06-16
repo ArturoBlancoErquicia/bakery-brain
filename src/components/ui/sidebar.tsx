@@ -73,7 +73,7 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false)
 
     const [_open, _setOpen] = React.useState(() => {
-      if (typeof document === 'undefined') return defaultOpen; // For SSR
+      if (typeof document === 'undefined') return defaultOpen; 
       const cookieValue = document.cookie
         .split("; ")
         .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
@@ -136,7 +136,7 @@ const SidebarProvider = React.forwardRef<
 
     React.useEffect(() => {
       if(isMobile && open) {
-        setOpen(false); // Collapse desktop sidebar if mobile is open
+        setOpen(false); 
       }
     }, [isMobile, open, setOpen]);
 
@@ -542,17 +542,17 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-type SidebarMenuButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'asChild'> & // Omit asChild from button attributes
-  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'asChild'> & { // Omit asChild from anchor attributes
-    asChild?: boolean; // This is for the Slot pattern
+type SidebarMenuButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'asChild'> &
+  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'asChild' | 'href'> & { // Remove href from Anchor attributes as it's handled separately
+    asChild?: boolean;
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-    href?: string;
+    href?: string; // Keep href as a specific prop
   } & VariantProps<typeof sidebarMenuButtonVariants>;
 
 
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement | HTMLAnchorElement,
+  HTMLButtonElement, // The ref will always point to the underlying button
   SidebarMenuButtonProps
 >(
   (
@@ -563,72 +563,86 @@ const SidebarMenuButton = React.forwardRef<
       size,
       tooltip,
       href,
-      className,
+      className: classNameFromCaller,
       children,
-      ...restProps // Contains all other props like onClick, etc.
+      ...restButtonProps
     },
     ref
   ) => {
-    const { isMobile, state } = useSidebar();
+    const { isMobile, state: sidebarState } = useSidebar();
     const [hasMounted, setHasMounted] = React.useState(false);
 
     React.useEffect(() => {
       setHasMounted(true);
     }, []);
 
-    const shouldShowTooltip = tooltip && hasMounted && !isMobile && state === "collapsed";
+    // The core interactive element is always a button for consistency in this component
+    const CoreButton = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+      (props, buttonRef) => (
+        <button
+          ref={buttonRef}
+          data-sidebar="menu-button"
+          data-size={size}
+          data-active={isActive}
+          className={cn(sidebarMenuButtonVariants({ variant, size, className: classNameFromCaller }))}
+          {...props} // Props from NextLink (if used) and TooltipTrigger will be spread here
+        >
+          {children}
+        </button>
+      )
+    );
+    CoreButton.displayName = "CoreButton";
 
-    const commonButtonProps = {
-      className: cn(sidebarMenuButtonVariants({ variant, size, className })),
-      'data-sidebar': "menu-button",
-      'data-size': size,
-      'data-active': isActive,
-      ...restProps,
-    };
 
-    const buttonContent = <>{children}</>;
-
-    let interactiveElement;
+    let interactiveElement: JSX.Element;
 
     if (href) {
-      // When href is present, NextLink with asChild wraps a button.
-      // The button receives all common props and the ref.
-      // NextLink passes navigation capabilities to this button.
       interactiveElement = (
-        <NextLink href={href} asChild legacyBehavior={false}>
-          <button {...commonButtonProps} ref={ref as React.Ref<HTMLButtonElement>}>
-            {buttonContent}
-          </button>
+        <NextLink href={href} passHref asChild>
+          {/*
+            NextLink uses asChild, passes its props (href, nav onClick) to CoreButton.
+            CoreButton (which is <button>) receives these.
+            passHref ensures href is available for Radix.
+            The ref from SidebarMenuButton is passed to CoreButton.
+          */}
+          <CoreButton {...restButtonProps} ref={ref} />
         </NextLink>
       );
     } else {
-      // No href, just a button.
-      // If menuButtonAsChild is true, use Slot, otherwise use button.
-      const Comp = menuButtonAsChild ? Slot : "button";
-      interactiveElement = (
-        <Comp {...commonButtonProps} ref={ref as React.Ref<HTMLButtonElement>}>
-          {buttonContent}
-        </Comp>
-      );
+      // If no href, it's just a button.
+      // If menuButtonAsChild is true, Slot is used, otherwise CoreButton directly.
+      // However, menuButtonAsChild is not used by SidebarNav, so it's always CoreButton.
+      const Comp = menuButtonAsChild ? Slot : CoreButton;
+      interactiveElement = <Comp {...restButtonProps} ref={ref} />;
     }
-    
-    if (shouldShowTooltip) {
-      const tooltipContentProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
+
+    if (tooltip) {
+      const tooltipContentProps =
+        typeof tooltip === "string" ? { children: tooltip } : tooltip;
+      
+      const isTooltipEffectivelyOpen = hasMounted && !isMobile && sidebarState === "collapsed";
+
       return (
-        <Tooltip>
+        <Tooltip open={isTooltipEffectivelyOpen ? undefined : false} defaultOpen={false}>
           <TooltipTrigger asChild>
-            {/* TooltipTrigger clones interactiveElement.
-                If interactiveElement is NextLink asChild -> button, TooltipTrigger clones NextLink.
-                NextLink (asChild) clones button. Button gets all props.
-                If interactiveElement is button, TooltipTrigger clones button.
+            {/*
+              TooltipTrigger wraps interactiveElement.
+              If interactiveElement is NextLink (asChild CoreButton), Trigger passes props to NextLink.
+              NextLink (asChild) passes (its own + Trigger's) props to the CoreButton.
+              Result: CoreButton gets all props.
             */}
             {interactiveElement}
           </TooltipTrigger>
+          {/*
+            Render TooltipContent structurally. Its visibility is controlled by Tooltip's open state.
+            Radix portals the content, so its conditional rendering (if tooltipActuallyShows is false)
+            should not affect the trigger's DOM structure for hydration.
+          */}
           <TooltipContent side="right" align="center" {...tooltipContentProps} />
         </Tooltip>
       );
     }
-    
+
     return interactiveElement;
   }
 );
@@ -802,5 +816,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
-    
