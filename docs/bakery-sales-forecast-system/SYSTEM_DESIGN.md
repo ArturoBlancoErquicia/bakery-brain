@@ -236,14 +236,18 @@ graph TD
 
 ### 5.1. Propósito
 
-Permitir la creación, seguimiento y finalización de órdenes para la producción de artículos de panadería. Estas órdenes, al completarse, incrementarán el stock de productos terminados en la tienda de destino.
+Permitir la creación, seguimiento y finalización de órdenes para la producción de artículos de panadería. Estas órdenes, al completarse, incrementarán el stock de productos terminados en la tienda de destino. Las órdenes de fabricación pueden ser creadas manualmente o sugeridas por el sistema basándose en las previsiones de ventas y los niveles de stock actuales.
 
 ### 5.2. Funcionalidades Clave
 
 *   **Creación de Órdenes**:
-    *   Manual: Por el Encargado de Producción.
-    *   Sugerida: El sistema podría proponer órdenes basadas en predicciones de ventas, niveles de stock actuales y puntos de reorden.
-    *   Campos: `product_id`, `product_name` (autocompletado), `quantity_to_produce`, `store_id_destination`, `target_completion_date`.
+    *   **Manual**: Por el Encargado de Producción. El usuario introduce todos los detalles de la orden.
+    *   **Sugerida (Determinada por Previsión de Ventas)**:
+        *   El sistema analiza las predicciones de ventas y los niveles de stock actuales para cada producto y tienda.
+        *   Si se proyecta que el stock de un producto caerá por debajo de su punto de reorden (considerando la demanda pronosticada para D+1, D+7), el sistema generará una sugerencia de orden de fabricación.
+        *   Estas sugerencias incluirán el producto, la cantidad estimada necesaria (ajustable), la tienda de destino y una fecha de finalización objetivo.
+        *   El Encargado de Producción revisa estas sugerencias, puede modificar cualquier campo (cantidad, fechas) y luego confirmar la sugerencia para convertirla en una orden de fabricación activa.
+    *   Campos para una orden (manual o confirmada desde sugerencia): `product_id`, `product_name` (autocompletado), `quantity_to_produce`, `store_id_destination`, `target_completion_date`.
 *   **Listado y Filtro de Órdenes**:
     *   Ver todas las órdenes con filtros por estado, producto, tienda, fecha.
     *   Columnas: `order_id`, `product_name`, `quantity`, `store_id`, `status`, `creation_date`, `expected_completion_date`.
@@ -265,9 +269,10 @@ Permitir la creación, seguimiento y finalización de órdenes para la producci�
 ### 5.4. Interfaz de Usuario
 
 *   Una nueva página dedicada a "Órdenes de Fabricación".
-*   Formulario para crear/editar órdenes.
+*   Formulario para crear/editar órdenes (soporta entrada manual y podría pre-llenarse con sugerencias del sistema).
 *   Tabla o lista de tarjetas para visualizar las órdenes.
 *   Botones de acción para cambiar estados.
+*   (Opcional futuro) Sección de "Órdenes Sugeridas" donde el Encargado de Producción puede revisar, ajustar y confirmar las propuestas del sistema.
 
 ## 6. Documentación Técnica y Roles
 
@@ -359,4 +364,3 @@ El diagrama de arquitectura lógica se proporcionó en la sección 1.1 (actualiz
 ---
 Este diseño es un punto de partida. Cada sección podría expandirse en documentos más detallados.
 
-```
