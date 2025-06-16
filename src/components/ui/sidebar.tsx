@@ -53,15 +53,15 @@ const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     defaultOpen?: boolean
-    open?: boolean // Controlled prop (optional)
-    onOpenChange?: (open: boolean) => void // Controlled prop callback (optional)
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
   }
 >(
   (
     {
       defaultOpen = true,
-      open: openProp, // For controlled component usage
-      onOpenChange: setOpenProp, // For controlled component usage
+      open: openProp,
+      onOpenChange: setOpenProp,
       className,
       style,
       children,
@@ -71,27 +71,25 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
-
-    // Internal state for uncontrolled component or initial state for controlled
     const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
 
-    // Determine if the component is controlled
     const isControlled = openProp !== undefined && setOpenProp !== undefined;
     const open = isControlled ? openProp : internalOpen;
-
-    // Effect to sync with cookie after mount for uncontrolled component
+    
     React.useEffect(() => {
-      if (!isControlled && typeof document !== 'undefined') {
+      if (!isControlled) {
         const cookieValue = document.cookie
           .split("; ")
           .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
           ?.split("=")[1];
-        const cookieOpenState = cookieValue ? cookieValue === "true" : defaultOpen;
-        if (internalOpen !== cookieOpenState) {
-          setInternalOpen(cookieOpenState);
+        if (cookieValue !== undefined) {
+            const cookieOpenState = cookieValue === "true";
+            if (internalOpen !== cookieOpenState) {
+                 setInternalOpen(cookieOpenState);
+            }
         }
       }
-    }, [isControlled, defaultOpen]); // Removed internalOpen from deps to avoid loop, only runs once to init from cookie
+    }, [isControlled, internalOpen]); // Effect for reading cookie only
 
     const setOpenState = React.useCallback(
       (value: boolean | ((prevOpen: boolean) => boolean)) => {
@@ -105,7 +103,7 @@ const SidebarProvider = React.forwardRef<
           }
         }
       },
-      [isControlled, open, setOpenProp] // Removed internalOpen
+      [isControlled, open, setOpenProp]
     );
     
     const toggleSidebar = React.useCallback(() => {
@@ -133,10 +131,9 @@ const SidebarProvider = React.forwardRef<
 
     const sidebarState = open ? "expanded" : "collapsed"
 
-    // Effect to handle mobile sidebar behavior when `open` (desktop state) changes
      React.useEffect(() => {
-      if(isMobile && open) { // If on mobile and desktop sidebar was told to open
-        setOpenState(false); // Collapse desktop sidebar as mobile takes precedence
+      if(isMobile && open) { 
+        setOpenState(false); 
       }
     }, [isMobile, open, setOpenState]);
 
@@ -556,14 +553,16 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-type SidebarMenuButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'asChild' | 'children'> &
-  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'asChild' | 'href' | 'children'> & {
-    isActive?: boolean;
-    tooltip?: string | Omit<React.ComponentProps<typeof TooltipContent>, 'children' | 'asChild'> & {children: React.ReactNode};
-    href?: string;
-    children: React.ReactNode; 
-    className?: string;
-  } & VariantProps<typeof sidebarMenuButtonVariants>;
+type AnchorProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>;
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+type SidebarMenuButtonProps = Omit<AnchorProps & ButtonProps, 'children'> & {
+  isActive?: boolean;
+  tooltip?: string | Omit<React.ComponentProps<typeof TooltipContent>, 'children' | 'asChild'> & { children: React.ReactNode };
+  href?: string;
+  children: React.ReactNode;
+  className?: string;
+} & VariantProps<typeof sidebarMenuButtonVariants>;
 
 
 const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
@@ -574,10 +573,10 @@ const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
       size,
       tooltip,
       href,
-      children: buttonContent,
+      children: buttonContentChildren,
       isActive = false,
-      type: buttonType, 
-      ...restButtonProps 
+      type: buttonType,
+      ...restButtonProps
     },
     ref
   ) => {
@@ -588,45 +587,42 @@ const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
       setHasMounted(true);
     }, []);
 
-    const commonProps = {
+    const derivedProps = {
       className: cn(sidebarMenuButtonVariants({ variant, size, className: propClassName })),
       'data-sidebar': "menu-button" as const,
       'data-size': size,
       'data-active': isActive,
     };
-    
-    // Separate props for anchor and button to avoid passing invalid props like 'type' to <a>
-    const { type, ...anchorSafeRestProps } = restButtonProps;
 
+    const visualContent = <>{buttonContentChildren}</>;
 
     let interactiveElement: JSX.Element;
 
     if (href) {
       interactiveElement = (
-        <NextLink 
-          href={href} 
-          {...commonProps} 
-          {...anchorSafeRestProps} 
-          ref={ref as React.Ref<HTMLAnchorElement>}
-          passHref // Ensure href is passed if child is not a native <a> or if wrapped further
-          legacyBehavior={false} // Use new NextLink behavior
-        >
-          {buttonContent}
+        <NextLink href={href} passHref legacyBehavior>
+          <a
+            ref={ref as React.Ref<HTMLAnchorElement>}
+            {...derivedProps}
+            {...restButtonProps}
+          >
+            {visualContent}
+          </a>
         </NextLink>
       );
     } else {
       interactiveElement = (
-        <button 
-          type={buttonType || 'button'} 
-          {...commonProps} 
-          {...restButtonProps}
+        <button
+          type={buttonType || 'button'}
           ref={ref as React.Ref<HTMLButtonElement>}
+          {...derivedProps}
+          {...restButtonProps}
         >
-          {buttonContent}
+          {visualContent}
         </button>
       );
     }
-    
+
     const shouldShowFullTooltip = tooltip && hasMounted && !isMobile && sidebarState === "collapsed";
 
     if (shouldShowFullTooltip) {
@@ -636,14 +632,13 @@ const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
           <TooltipTrigger asChild>
             {interactiveElement}
           </TooltipTrigger>
-          {tooltipContentProps && ( 
-             <TooltipContent side="right" align="center" {...tooltipContentProps} />
+          {tooltipContentProps && (
+            <TooltipContent side="right" align="center" {...tooltipContentProps} />
           )}
         </Tooltip>
       );
     }
-    
-    // Render without Tooltip wrapper on server, initial client, or when tooltip shouldn't be shown
+
     return interactiveElement;
   }
 );
@@ -817,4 +812,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
