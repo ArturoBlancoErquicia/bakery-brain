@@ -20,21 +20,21 @@ const statusConfig = {
     color: 'text-destructive',
     bgColor: 'bg-destructive/10',
     borderColor: 'border-destructive',
-    title: 'Critical Stock!',
+    title: '¡Stock Crítico!',
   },
   low: {
     icon: PackageSearch,
     color: 'text-yellow-600 dark:text-yellow-500',
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500 dark:border-yellow-400',
-    title: 'Low Stock',
+    title: 'Bajo Stock',
   },
   reorder: {
     icon: ShoppingCart,
     color: 'text-blue-600 dark:text-blue-500',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500 dark:border-blue-400',
-    title: 'Reorder Suggested',
+    title: 'Reorden Sugerido',
   },
   ok: {
     icon: CheckCircle2,
@@ -60,22 +60,22 @@ export default function StockAlertItem({ productName, currentStock, reorderPoint
       </CardHeader>
       <CardContent className="pt-4 space-y-2 font-body">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Current Stock:</span>
-          <span className={cn("font-semibold", currentStock <= reorderPoint ? config.color : 'text-foreground' )}>{currentStock} units</span>
+          <span className="text-muted-foreground">Stock Actual:</span>
+          <span className={cn("font-semibold", currentStock <= reorderPoint ? config.color : 'text-foreground' )}>{currentStock} unidades</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Reorder Point:</span>
-          <span className="font-semibold">{reorderPoint} units</span>
+          <span className="text-muted-foreground">Punto de Reorden:</span>
+          <span className="font-semibold">{reorderPoint} unidades</span>
         </div>
         {status !== 'ok' && (
             <div className="flex justify-between text-sm pt-1">
-            <span className="text-muted-foreground">Suggested Qty:</span>
-            <span className="font-semibold">{suggestedReorderQty} units</span>
+            <span className="text-muted-foreground">Cant. Sugerida:</span>
+            <span className="font-semibold">{suggestedReorderQty} unidades</span>
             </div>
         )}
         {status !== 'ok' && (
             <Button size="sm" className="w-full mt-4" variant={status === 'critical' ? 'destructive' : 'default'}>
-            Reorder Now
+            Reordenar Ahora
             </Button>
         )}
       </CardContent>

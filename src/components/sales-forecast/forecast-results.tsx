@@ -14,21 +14,21 @@ export default function ForecastResults({ forecast, productName }: ForecastResul
   return (
     <Card className="bg-secondary/50">
       <CardHeader>
-        <CardTitle className="font-headline">Sales Forecast for {productName}</CardTitle>
-        <CardDescription className="font-body">AI-powered prediction for the upcoming week.</CardDescription>
+        <CardTitle className="font-headline">Pronóstico de Ventas para {productName}</CardTitle>
+        <CardDescription className="font-body">Predicción impulsada por IA para la próxima semana.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center p-4 bg-background rounded-lg shadow">
           <TrendingUp className="h-8 w-8 text-accent mr-4" />
           <div>
-            <p className="text-sm text-muted-foreground font-body">Predicted Weekly Sales</p>
-            <p className="text-2xl font-bold font-headline">{forecast.weeklySalesForecast} units</p>
+            <p className="text-sm text-muted-foreground font-body">Ventas Semanales Previstas</p>
+            <p className="text-2xl font-bold font-headline">{forecast.weeklySalesForecast} unidades</p>
           </div>
         </div>
         <div className="flex items-center p-4 bg-background rounded-lg shadow">
           <Percent className="h-8 w-8 text-accent mr-4" />
           <div>
-            <p className="text-sm text-muted-foreground font-body">Confidence Interval</p>
+            <p className="text-sm text-muted-foreground font-body">Intervalo de Confianza</p>
             <p className="text-xl font-semibold font-headline">&plusmn; {forecast.confidenceInterval.toFixed(1)}%</p>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function ForecastResults({ forecast, productName }: ForecastResul
           <div className="flex items-start">
             <HelpCircle className="h-6 w-6 text-accent mr-3 mt-1" />
             <div>
-              <p className="text-sm text-muted-foreground font-body mb-1">Explanation</p>
+              <p className="text-sm text-muted-foreground font-body mb-1">Explicación</p>
               <p className="text-base font-body">{forecast.explanation}</p>
             </div>
           </div>

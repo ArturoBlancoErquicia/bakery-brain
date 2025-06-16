@@ -6,17 +6,17 @@ export default function SalesForecastPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="text-3xl font-bold font-headline">Sales Forecast & Stock Optimization</h1>
+        <h1 className="text-3xl font-bold font-headline">Pronóstico de Ventas y Optimización de Stock</h1>
         <p className="text-muted-foreground font-body">
-          Leverage AI to predict weekly sales and receive stock optimization suggestions.
+          Utiliza IA para predecir ventas semanales y recibir sugerencias de optimización de stock.
         </p>
       </header>
       
       <Card>
         <CardHeader>
-          <CardTitle>Product Details & Forecast Input</CardTitle>
+          <CardTitle>Detalles del Producto e Información para Pronóstico</CardTitle>
           <CardDescription>
-            Provide the necessary information for the product you want to forecast.
+            Proporciona la información necesaria para el producto que deseas pronosticar.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -8,9 +8,9 @@ import { LayoutDashboard, TrendingUp, Archive } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/sales-forecast', label: 'Sales Forecast', icon: TrendingUp },
-  { href: '/stock-alerts', label: 'Stock Alerts', icon: Archive },
+  { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard },
+  { href: '/sales-forecast', label: 'Pronóstico Ventas', icon: TrendingUp },
+  { href: '/stock-alerts', label: 'Alertas de Stock', icon: Archive },
 ];
 
 export default function SidebarNav() {

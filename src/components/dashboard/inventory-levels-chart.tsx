@@ -7,19 +7,19 @@ import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 const inventoryData = [
   { product: 'Croissant', stock: 50, reorderPoint: 20 },
   { product: 'Baguette', stock: 30, reorderPoint: 15 },
-  { product: 'Sourdough', stock: 25, reorderPoint: 10 },
+  { product: 'Masa Madre', stock: 25, reorderPoint: 10 },
   { product: 'Muffin', stock: 75, reorderPoint: 30 },
-  { product: 'Donut', stock: 60, reorderPoint: 25 },
-  { product: 'Cake Slice', stock: 40, reorderPoint: 15 },
+  { product: 'Dona', stock: 60, reorderPoint: 25 },
+  { product: 'Rebanada Pastel', stock: 40, reorderPoint: 15 },
 ];
 
 const chartConfig = {
   stock: {
-    label: "Current Stock",
+    label: "Stock Actual",
     color: "hsl(var(--chart-1))",
   },
   reorderPoint: {
-    label: "Reorder Point",
+    label: "Punto de Reorden",
     color: "hsl(var(--chart-4))",
   },
 };

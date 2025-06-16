@@ -8,15 +8,15 @@ import { DollarSign, Package, TrendingUpIcon } from 'lucide-react';
 export default function DashboardPage() {
   // Mock data for summary cards
   const summaryStats = [
-    { title: "Total Sales (Month)", value: "$12,345", icon: DollarSign, change: "+5.2%", changeType: "positive" as const, description: "Compared to last month" },
-    { title: "Inventory Items", value: "1,280", icon: Package, change: "-1.8%", changeType: "negative" as const, description: "Low stock items: 15" },
-    { title: "Average Margin", value: "35.6%", icon: TrendingUpIcon, change: "+0.5%", changeType: "positive" as const, description: "Overall product margin" },
+    { title: "Ventas Totales (Mes)", value: "$12,345", icon: DollarSign, change: "+5.2%", changeType: "positive" as const, description: "Comparado con el mes pasado" },
+    { title: "Artículos en Inventario", value: "1,280", icon: Package, change: "-1.8%", changeType: "negative" as const, description: "Artículos con bajo stock: 15" },
+    { title: "Margen Promedio", value: "35.6%", icon: TrendingUpIcon, change: "+0.5%", changeType: "positive" as const, description: "Margen general de productos" },
   ];
 
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold font-headline">Dashboard</h1>
+      <h1 className="text-3xl font-bold font-headline">Panel de Control</h1>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {summaryStats.map((stat) => (
@@ -41,8 +41,8 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle>Sales Trends</CardTitle>
-            <CardDescription>Weekly sales overview for the last 3 months.</CardDescription>
+            <CardTitle>Tendencias de Ventas</CardTitle>
+            <CardDescription>Resumen semanal de ventas de los últimos 3 meses.</CardDescription>
           </CardHeader>
           <CardContent>
             <SalesTrendsChart />
@@ -50,8 +50,8 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Inventory Levels</CardTitle>
-            <CardDescription>Current stock for top products.</CardDescription>
+            <CardTitle>Niveles de Inventario</CardTitle>
+            <CardDescription>Stock actual de los productos principales.</CardDescription>
           </CardHeader>
           <CardContent>
             <InventoryLevelsChart />
@@ -59,8 +59,8 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Pricing Effectiveness</CardTitle>
-            <CardDescription>Price and margin overview for key items.</CardDescription>
+            <CardTitle>Efectividad de Precios</CardTitle>
+            <CardDescription>Resumen de precios y márgenes de artículos clave.</CardDescription>
           </CardHeader>
           <CardContent>
             <PricingEffectivenessChart />

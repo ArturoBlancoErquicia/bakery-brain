@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import AppLayout from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
-  title: 'Bakery Brain',
-  description: 'Platform for forecasting, optimization, and analysis for bakeries.',
+  title: 'Cerebro Pastelero',
+  description: 'Plataforma de pronóstico, optimización y análisis para pastelerías.',
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -7,18 +7,18 @@ import { ChartTooltipContent, ChartContainer } from '@/components/ui/chart';
 const pricingData = [
   { product: 'Croissant', price: 3.50, margin: 1.50 },
   { product: 'Baguette', price: 4.00, margin: 1.20 },
-  { product: 'Sourdough', price: 6.50, margin: 2.50 },
+  { product: 'Masa Madre', price: 6.50, margin: 2.50 },
   { product: 'Muffin', price: 2.75, margin: 1.00 },
-  { product: 'Donut', price: 2.50, margin: 0.90 },
+  { product: 'Dona', price: 2.50, margin: 0.90 },
 ];
 
 const chartConfig = {
   price: {
-    label: "Price ($)",
+    label: "Precio ($)",
     color: "hsl(var(--chart-2))",
   },
   margin: {
-    label: "Margin ($)",
+    label: "Margen ($)",
     color: "hsl(var(--chart-5))",
   },
 };

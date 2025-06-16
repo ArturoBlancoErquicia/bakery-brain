@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 
 
 const formSchema = z.object({
-  productName: z.string().min(2, { message: "Product name must be at least 2 characters." }),
+  productName: z.string().min(2, { message: "El nombre del producto debe tener al menos 2 caracteres." }),
   pastSalesData: z.string().refine((data) => {
     try {
       JSON.parse(data);
@@ -25,7 +25,7 @@ const formSchema = z.object({
     } catch (e) {
       return false;
     }
-  }, { message: "Past sales data must be valid JSON." }),
+  }, { message: "Los datos de ventas anteriores deben ser un JSON válido." }),
   promotions: z.string().optional(),
   externalFactors: z.string().optional().refine((data) => {
     if (data === undefined || data === "") return true;
@@ -35,9 +35,9 @@ const formSchema = z.object({
     } catch (e) {
       return false;
     }
-  }, { message: "External factors must be valid JSON if provided." }),
-  currentInventory: z.coerce.number().positive({ message: "Current inventory must be a positive number." }),
-  productCategory: z.string().min(2, { message: "Product category must be at least 2 characters." }),
+  }, { message: "Los factores externos deben ser un JSON válido si se proporcionan." }),
+  currentInventory: z.coerce.number().positive({ message: "El inventario actual debe ser un número positivo." }),
+  productCategory: z.string().min(2, { message: "La categoría del producto debe tener al menos 2 caracteres." }),
 });
 
 type SalesForecastFormValues = z.infer<typeof formSchema>;
@@ -53,9 +53,9 @@ export default function SalesForecastForm() {
       productName: "",
       pastSalesData: `[{"date": "2024-05-01", "quantity": 10}, {"date": "2024-05-08", "quantity": 12}]`,
       promotions: "",
-      externalFactors: `{"weather": "sunny", "event": "local festival"}`,
+      externalFactors: `{"weather": "soleado", "event": "festival local"}`,
       currentInventory: 50,
-      productCategory: "Pastries",
+      productCategory: "Repostería",
     },
   });
 
@@ -75,18 +75,18 @@ export default function SalesForecastForm() {
       if (insightResults.error) {
         toast({
           variant: "destructive",
-          title: "Error fetching insights",
+          title: "Error al obtener información",
           description: insightResults.error,
         });
       } else {
         setResults(insightResults);
       }
     } catch (error) {
-      console.error("Failed to get sales insights:", error);
+      console.error("Error al obtener información de ventas:", error);
       toast({
         variant: "destructive",
-        title: "Submission Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        title: "Error de Envío",
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado.",
       });
     } finally {
       setIsLoading(false);
@@ -103,9 +103,9 @@ export default function SalesForecastForm() {
               name="productName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Name</FormLabel>
+                  <FormLabel>Nombre del Producto</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Croissant" {...field} />
+                    <Input placeholder="ej., Croissant" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,9 +116,9 @@ export default function SalesForecastForm() {
               name="productCategory"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Category</FormLabel>
+                  <FormLabel>Categoría del Producto</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Bread, Pastries" {...field} />
+                    <Input placeholder="ej., Pan, Repostería" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,16 +131,16 @@ export default function SalesForecastForm() {
             name="pastSalesData"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Past Sales Data (JSON)</FormLabel>
+                <FormLabel>Datos de Ventas Anteriores (JSON)</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder='e.g., [{"date": "YYYY-MM-DD", "quantity": 10}, ...]'
+                    placeholder='ej., [{"date": "AAAA-MM-DD", "quantity": 10}, ...]'
                     className="min-h-[100px]"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Provide historical sales data in JSON format.
+                  Proporciona datos históricos de ventas en formato JSON.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -152,9 +152,9 @@ export default function SalesForecastForm() {
             name="currentInventory"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Current Inventory Level</FormLabel>
+                <FormLabel>Nivel de Inventario Actual</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 50" {...field} />
+                  <Input type="number" placeholder="ej., 50" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -167,9 +167,9 @@ export default function SalesForecastForm() {
               name="promotions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Promotions (Optional)</FormLabel>
+                  <FormLabel>Promociones (Opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Buy one get one free" {...field} />
+                    <Input placeholder="ej., Compra uno y lleva otro gratis" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,12 +180,12 @@ export default function SalesForecastForm() {
               name="externalFactors"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>External Factors (JSON, Optional)</FormLabel>
+                  <FormLabel>Factores Externos (JSON, Opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder='e.g., {"weather": "rainy", "holiday": "none"}' {...field} />
+                    <Input placeholder='ej., {"clima": "lluvioso", "feriado": "ninguno"}' {...field} />
                   </FormControl>
                   <FormDescription>
-                    Relevant external factors like weather or events in JSON format.
+                    Factores externos relevantes como clima o eventos en formato JSON.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -195,7 +195,7 @@ export default function SalesForecastForm() {
           
           <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Get Insights
+            Obtener Información
           </Button>
         </form>
       </Form>
@@ -203,7 +203,7 @@ export default function SalesForecastForm() {
       {isLoading && (
         <div className="mt-8 flex justify-center items-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2 font-body">Generating insights...</p>
+          <p className="ml-2 font-body">Generando información...</p>
         </div>
       )}
 

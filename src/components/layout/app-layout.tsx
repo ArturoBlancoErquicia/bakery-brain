@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar collapsible="icon" variant="sidebar" side="left">
         <SidebarHeader className="h-16 flex items-center justify-between">
           <h1 className="text-2xl font-headline font-semibold px-2 group-data-[collapsible=icon]:hidden">
-            Bakery Brain
+            Cerebro Pastelero
           </h1>
            <div className="md:hidden"> {/* Show trigger only on mobile if sidebar is collapsible */}
             <SidebarTrigger />
@@ -33,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
           <Button variant="ghost" className="w-full justify-start group-data-[collapsible=icon]:justify-center">
             <LogOut className="mr-2 group-data-[collapsible=icon]:mr-0" />
-            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+            <span className="group-data-[collapsible=icon]:hidden">Cerrar Sesión</span>
           </Button>
         </SidebarFooter>
       </Sidebar>
