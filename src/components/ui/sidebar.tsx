@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import NextLink from 'next/link';
+// import NextLink from 'next/link'; // No longer needed directly here for SidebarMenuButton
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
@@ -15,10 +15,8 @@ import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  TooltipProvider, // Keep TooltipProvider at a higher level
+  // Tooltip, TooltipContent, TooltipTrigger, // These will be used in sidebar-nav.tsx
 } from "@/components/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
@@ -71,26 +69,28 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+    
+    // Initialize state based on defaultOpen for both server and initial client render
     const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
-
     const isControlled = openProp !== undefined && setOpenProp !== undefined;
     const open = isControlled ? openProp : internalOpen;
-    
+
+    // Effect to read cookie and update state on client-side after mount
     React.useEffect(() => {
-      if (!isControlled) {
+      if (!isControlled && typeof document !== 'undefined') {
         const cookieValue = document.cookie
           .split("; ")
           .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
           ?.split("=")[1];
         if (cookieValue !== undefined) {
             const cookieOpenState = cookieValue === "true";
-             if (internalOpen !== cookieOpenState) {
+            if (internalOpen !== cookieOpenState) { // only update if different
                 setInternalOpen(cookieOpenState);
             }
         }
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isControlled, defaultOpen]);
+    }, [isControlled, defaultOpen]); // Removed internalOpen from deps to avoid loop with setInternalOpen
 
 
     const setOpenState = React.useCallback(
@@ -100,10 +100,12 @@ const SidebarProvider = React.forwardRef<
           setOpenProp(newOpenState);
         } else {
           setInternalOpen(newOpenState);
-          document.cookie = `${SIDEBAR_COOKIE_NAME}=${newOpenState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+          if (typeof document !== 'undefined') {
+            document.cookie = `${SIDEBAR_COOKIE_NAME}=${newOpenState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax`;
+          }
         }
       },
-      [isControlled, open, setOpenProp]
+      [isControlled, open, setOpenProp] // Removed internalOpen
     );
     
     const toggleSidebar = React.useCallback(() => {
@@ -531,7 +533,8 @@ const SidebarMenuItem = React.forwardRef<
 ))
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
-const sidebarMenuButtonVariants = cva(
+// CVA for styling the menu button (link or button)
+export const sidebarMenuButtonVariants = cva(
   "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
@@ -553,32 +556,8 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-// Simplified SidebarMenuButton: Renders a div with styles and children.
-// It will be wrapped by NextLink or <button> in SidebarNav.
-// The `asChild` prop is no longer needed here as it will be handled by the wrapper.
-interface SidebarMenuButtonProps
-  extends React.HTMLAttributes<HTMLDivElement>, // Changed from HTMLElement
-    VariantProps<typeof sidebarMenuButtonVariants> {
-  // No href, onClick, isActive, or tooltip here. These are handled by the wrapper.
-}
 
-const SidebarMenuButton = React.forwardRef<
-  HTMLDivElement, // Specifically a div now
-  SidebarMenuButtonProps
->(({ className, variant, size, children, ...props }, ref) => {
-  // All props (including data-active, data-sidebar from wrapper) will be applied here
-  return (
-    <div
-      ref={ref}
-      className={cn(sidebarMenuButtonVariants({ variant, size, className }))}
-      {...props} // Spread all other props, including those passed by asChild wrappers
-    >
-      {children}
-    </div>
-  );
-});
-SidebarMenuButton.displayName = "SidebarMenuButton";
-
+// SidebarMenuButton component is removed as its logic is now in SidebarNavItemContent in sidebar-nav.tsx
 
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
@@ -735,7 +714,7 @@ export {
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuBadge,
-  SidebarMenuButton, // Exporting the simplified version
+  // SidebarMenuButton, // Removed
   SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarMenuSub,
