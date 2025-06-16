@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import NextLink from 'next/link'; // Added import
+import NextLink from 'next/link';
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
@@ -219,6 +219,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+            "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -552,6 +553,11 @@ const SidebarMenuButton = React.forwardRef<
   ) => {
     const Comp = asChild ? Slot : "button";
     const { isMobile, state } = useSidebar();
+    const [hasMounted, setHasMounted] = React.useState(false);
+
+    React.useEffect(() => {
+      setHasMounted(true);
+    }, []);
 
     const coreElement = (
       <Comp
@@ -578,13 +584,23 @@ const SidebarMenuButton = React.forwardRef<
 
     const tooltipContentProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
 
+    // Conditions for not showing tooltip:
+    // 1. Not mounted yet (SSR or initial client render)
+    // 2. On mobile
+    // 3. On desktop, but sidebar is expanded
+    // Tooltip should only appear on desktop when sidebar is collapsed.
+    if (!hasMounted || isMobile || (state === "expanded" && !isMobile)) {
+      return linkedElement; // Render without Tooltip wrapper
+    }
+    
+    // Only render with Tooltip if on desktop, sidebar is collapsed, and component has mounted
     return (
       <Tooltip>
         <TooltipTrigger asChild>{linkedElement}</TooltipTrigger>
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          // No custom 'hidden' prop, Radix handles visibility
           {...tooltipContentProps}
         />
       </Tooltip>
@@ -760,3 +776,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
