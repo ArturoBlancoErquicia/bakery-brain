@@ -1,16 +1,18 @@
+
 "use client";
 
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { LayoutDashboard, TrendingUp, Archive } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Archive, FileUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard },
   { href: '/sales-forecast', label: 'Pronóstico Ventas', icon: TrendingUp },
   { href: '/stock-alerts', label: 'Alertas de Stock', icon: Archive },
+  { href: '/data-upload', label: 'Carga de Datos', icon: FileUp },
 ];
 
 export default function SidebarNav() {
@@ -38,3 +40,4 @@ export default function SidebarNav() {
     </SidebarMenu>
   );
 }
+
