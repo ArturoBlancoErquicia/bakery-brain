@@ -58,18 +58,14 @@ export default function SidebarNav() {
 
         return (
           <SidebarMenuItem key={item.id}>
-            {/* Removed outer Link component */}
             <SidebarMenuButton
-              href={item.href} // Pass href directly to SidebarMenuButton
-              asChild
+              href={item.href}
               isActive={isActive}
               tooltip={{ children: item.label, className: "font-body" }}
               className="font-body"
             >
-              <a> {/* This 'a' tag is now correctly handled by the inner NextLink via Slot */}
-                <IconComponent />
-                <span>{item.label}</span>
-              </a>
+              <IconComponent />
+              <span>{item.label}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );
