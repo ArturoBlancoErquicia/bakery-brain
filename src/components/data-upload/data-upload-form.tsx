@@ -9,11 +9,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, FileUp, Download, CheckCircle, AlertCircle, TableIcon } from 'lucide-react';
+import { Loader2, FileUp, Download, CheckCircle, AlertCircle, TableIcon, Store } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
+const storeOptions = [
+  { value: "S001", label: "Tienda Principal (S001)" },
+  { value: "S002", label: "Sucursal Centro (S002)" },
+  { value: "S003", label: "Sucursal Norte (S003)" },
+  { value: "S004", label: "Panadería Oeste (S004)" },
+  { value: "S005", label: "Punto Sur (S005)" },
+  { value: "S006", label: "Kiosko Este (S006)" },
+];
+
 const formSchema = z.object({
+  storeId: z.string().min(1, { message: "Debes seleccionar una tienda." }),
   file: z
     .instanceof(FileList)
     .refine((files) => files?.length === 1, "Debes seleccionar un archivo.")
@@ -37,6 +48,9 @@ export default function DataUploadForm() {
 
   const form = useForm<DataUploadFormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      storeId: "",
+    }
   });
 
   const handleDownloadTemplate = () => {
@@ -61,7 +75,7 @@ export default function DataUploadForm() {
     }
   };
 
-  const processFile = useCallback(async (file: File): Promise<boolean> => {
+  const processFile = useCallback(async (file: File, selectedStoreId: string): Promise<boolean> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -74,7 +88,7 @@ export default function DataUploadForm() {
           return;
         }
 
-        const lines = text.split(/\r\n|\n/).map(line => line.trim()).filter(line => line); // Handles both CRLF and LF
+        const lines = text.split(/\r\n|\n/).map(line => line.trim()).filter(line => line);
         if (lines.length < 2) { 
           setStatusMessage("El archivo CSV está vacío o no contiene suficientes datos (cabecera + al menos una fila).");
           setUploadStatus('error');
@@ -93,12 +107,35 @@ export default function DataUploadForm() {
           resolve(false);
           return;
         }
+        
+        // Optional: Validate if 'store_id' column exists and all data rows match selectedStoreId
+        const storeIdColumnIndex = headers.indexOf('store_id');
+        if (storeIdColumnIndex === -1) {
+            setStatusMessage("La columna 'store_id' es requerida en el archivo CSV.");
+            setUploadStatus('error');
+            setPreviewData(null);
+            resolve(false);
+            return;
+        }
 
-        const dataRows = lines.slice(1, Math.min(6, lines.length)).map(line => line.split(',').map(cell => cell.trim()));
+        const dataRows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+        
+        for (let i = 0; i < dataRows.length; i++) {
+            const row = dataRows[i];
+            if (row[storeIdColumnIndex] !== selectedStoreId) {
+                setStatusMessage(`Error en la fila ${i + 2}: El 'store_id' (${row[storeIdColumnIndex]}) no coincide con la tienda seleccionada (${selectedStoreId}).`);
+                setUploadStatus('error');
+                setPreviewData(null);
+                resolve(false);
+                return;
+            }
+        }
+        
         setPreviewData([headers, ...dataRows.slice(0,5)]); 
         
         setTimeout(() => {
-          setStatusMessage("Archivo procesado y validado exitosamente (simulación). Los datos estarían listos para ser incorporados y podrían usarse para reentrenar modelos.");
+          const storeLabel = storeOptions.find(s => s.value === selectedStoreId)?.label || selectedStoreId;
+          setStatusMessage(`Archivo para la tienda ${storeLabel} procesado y validado exitosamente (simulación). Los datos estarían listos para ser incorporados.`);
           setUploadStatus('success');
           resolve(true);
         }, 1500);
@@ -121,13 +158,14 @@ export default function DataUploadForm() {
     setPreviewData(null);
 
     const file = values.file[0];
+    const selectedStoreId = values.storeId;
 
     try {
-      const success = await processFile(file);
+      const success = await processFile(file, selectedStoreId);
       if (success) {
          toast({
           title: "Carga Exitosa (Simulada)",
-          description: "El archivo ha sido validado. En un sistema real, ahora se procesaría en el backend.",
+          description: `El archivo para la tienda ${storeOptions.find(s=>s.value === selectedStoreId)?.label || selectedStoreId} ha sido validado.`,
         });
       } else {
          toast({
@@ -158,12 +196,37 @@ export default function DataUploadForm() {
           Descargar Plantilla CSV
         </Button>
         <p className="text-sm text-muted-foreground mt-2">
-          La plantilla incluye las columnas requeridas: {EXPECTED_HEADERS.join(", ")}.
+          La plantilla incluye las columnas requeridas: {EXPECTED_HEADERS.join(", ")}. Asegúrate que la columna `store_id` en el CSV coincide con la tienda seleccionada.
         </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="storeId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center"><Store className="mr-2 h-4 w-4"/>Seleccionar Tienda</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Elige la tienda para la cual cargar datos" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {storeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="file"
@@ -178,14 +241,14 @@ export default function DataUploadForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Selecciona el archivo CSV con los datos históricos de ventas. Tamaño máximo: 5MB.
+                  Selecciona el archivo CSV con los datos históricos de ventas para la tienda elegida. Tamaño máximo: 5MB.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+          <Button type="submit" disabled={isLoading || !form.formState.isValid} className="w-full md:w-auto">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
             Subir y Validar Archivo
           </Button>
@@ -214,7 +277,7 @@ export default function DataUploadForm() {
         <div className="mt-6">
           <h3 className="text-lg font-semibold font-headline mb-2 flex items-center">
             <TableIcon className="mr-2 h-5 w-5" />
-            Vista Previa de Datos (Primeras Filas)
+            Vista Previa de Datos (Primeras Filas del Archivo Cargado)
           </h3>
           <div className="overflow-x-auto rounded-md border">
             <Table>
@@ -241,3 +304,4 @@ export default function DataUploadForm() {
     </>
   );
 }
+
