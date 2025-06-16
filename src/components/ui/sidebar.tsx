@@ -551,20 +551,18 @@ type SidebarMenuButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   } & VariantProps<typeof sidebarMenuButtonVariants>;
 
 
-const SidebarMenuButton = React.forwardRef<
-  HTMLElement, // Can be HTMLButtonElement or HTMLAnchorElement
-  SidebarMenuButtonProps
->(
+const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
   (
     {
+      className: propClassName,
       variant,
       size,
       tooltip,
       href,
-      className: classNameFromCaller,
       children: buttonContent,
       isActive = false,
-      ...restProps // Contains other attributes like 'type' for button, or aria-* for links
+      type: buttonType, 
+      ...restButtonProps 
     },
     ref
   ) => {
@@ -575,61 +573,44 @@ const SidebarMenuButton = React.forwardRef<
       setHasMounted(true);
     }, []);
 
-    const isTooltipEffectivelyOpen = hasMounted && !isMobile && sidebarState === "collapsed";
-    const tooltipContentProps = typeof tooltip === "string" ? { children: tooltip } : tooltip;
-
-    // Shared DOM properties for both button and NextLink's <a> tag
-    const sharedDomProps = {
-      className: cn(sidebarMenuButtonVariants({ variant, size, className: classNameFromCaller })),
+    const commonProps = {
+      className: cn(sidebarMenuButtonVariants({ variant, size, className: propClassName })),
       'data-sidebar': "menu-button" as const,
       'data-size': size,
       'data-active': isActive,
+      ...restButtonProps,
     };
-
-    // Separate button-specific props from other props
-    const { type: buttonType, ...anchorSafeRestProps } = restProps as React.ButtonHTMLAttributes<HTMLButtonElement>;
 
     let interactiveElement: JSX.Element;
 
     if (href) {
       interactiveElement = (
-        <NextLink
-          href={href}
-          passHref // Ensures TooltipTrigger asChild gets the href for the <a>
-          legacyBehavior={false} // Modern Next.js Link behavior
-          ref={ref as React.Ref<HTMLAnchorElement>}
-          {...sharedDomProps} // Apply shared classes and data attributes
-          {...anchorSafeRestProps} // Apply other ARIA or general attributes safe for <a>
-        >
+        <NextLink href={href} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>} legacyBehavior={false}>
           {buttonContent}
         </NextLink>
       );
     } else {
       interactiveElement = (
-        <button
-          type={buttonType || 'button'} // Default to 'button' if not specified
-          ref={ref as React.Ref<HTMLButtonElement>}
-          {...sharedDomProps} // Apply shared classes and data attributes
-          {...restProps} // Apply all original restProps, including 'type'
-        >
+        <button type={buttonType || 'button'} {...commonProps} ref={ref as React.Ref<HTMLButtonElement>}>
           {buttonContent}
         </button>
       );
     }
 
-    if (tooltip) {
+    if (tooltip && hasMounted && !isMobile && sidebarState === "collapsed") {
+      const tooltipContentProps = typeof tooltip === "string" ? { children: tooltip } : tooltip;
       return (
-        <Tooltip open={isTooltipEffectivelyOpen ? undefined : false} defaultOpen={false}>
+        <Tooltip defaultOpen={false}>
           <TooltipTrigger asChild>
             {interactiveElement}
           </TooltipTrigger>
-          {tooltipContentProps && ( // Conditionally render TooltipContent only if tooltip exists
+          {tooltipContentProps && ( 
             <TooltipContent side="right" align="center" {...tooltipContentProps} />
           )}
         </Tooltip>
       );
     }
-
+    
     return interactiveElement;
   }
 );
@@ -803,4 +784,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
