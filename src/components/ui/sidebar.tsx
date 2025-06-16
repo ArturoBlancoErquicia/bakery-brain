@@ -72,8 +72,17 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    const [_open, _setOpen] = React.useState(defaultOpen)
+    const [_open, _setOpen] = React.useState(() => {
+      if (typeof document === 'undefined') return defaultOpen; // For SSR
+      const cookieValue = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+        ?.split("=")[1]
+      return cookieValue ? cookieValue === "true" : defaultOpen
+    })
+
     const open = openProp ?? _open
+    
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === "function" ? value(open) : value
@@ -82,16 +91,17 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState)
         }
-
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        if (typeof document !== 'undefined') {
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        }
       },
       [setOpenProp, open]
     )
 
     const toggleSidebar = React.useCallback(() => {
       return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
+        ? setOpenMobile((currentOpen) => !currentOpen)
+        : setOpen((currentOpen) => !currentOpen)
     }, [isMobile, setOpen, setOpenMobile])
 
     React.useEffect(() => {
@@ -123,6 +133,12 @@ const SidebarProvider = React.forwardRef<
       }),
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
     )
+
+    React.useEffect(() => {
+      if(isMobile && open) {
+        setOpen(false); // Collapse desktop sidebar if mobile is open
+      }
+    }, [isMobile, open, setOpen]);
 
     return (
       <SidebarContext.Provider value={contextValue}>
@@ -526,32 +542,33 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-type SidebarMenuButtonProps = React.ComponentProps<"button"> & {
-  asChild?: boolean;
-  isActive?: boolean;
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-  href?: string;
-} & VariantProps<typeof sidebarMenuButtonVariants>;
+type SidebarMenuButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+  React.AnchorHTMLAttributes<HTMLAnchorElement> & { // Allow Anchor props
+    asChild?: boolean;
+    isActive?: boolean;
+    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+    href?: string;
+  } & VariantProps<typeof sidebarMenuButtonVariants>;
+
 
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
+  HTMLButtonElement | HTMLAnchorElement, // Ref can be button or anchor
   SidebarMenuButtonProps
 >(
   (
     {
-      asChild: sbAsChild = false,
+      asChild: menuButtonAsChild = false, // This specific prop is for SidebarMenuButton's own behavior
       isActive = false,
-      variant = "default",
-      size = "default",
+      variant,
+      size,
       tooltip,
-      className,
       href,
+      className,
       children,
       ...restButtonProps
     },
     ref
   ) => {
-    const Comp = sbAsChild ? Slot : "button";
     const { isMobile, state } = useSidebar();
     const [hasMounted, setHasMounted] = React.useState(false);
 
@@ -559,45 +576,58 @@ const SidebarMenuButton = React.forwardRef<
       setHasMounted(true);
     }, []);
 
-    const actualButtonElement = (
-      <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-size={size}
-        data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size, className }))}
-        {...restButtonProps}
-      >
-        {children}
-      </Comp>
-    );
+    // Determine the base component type: 'button' if no href, otherwise NextLink will render 'a'
+    // The `asChild` prop for THIS component (SidebarMenuButton) is not used if href is present,
+    // because NextLink will be the primary component.
+    const Comp = menuButtonAsChild && !href ? Slot : 'button';
 
-    const linkedElement = href ? (
-      <NextLink href={href} asChild>
-        <Slot>{actualButtonElement}</Slot>
-      </NextLink>
-    ) : actualButtonElement;
+    const commonProps = {
+      className: cn(sidebarMenuButtonVariants({ variant, size, className })),
+      'data-sidebar': "menu-button",
+      'data-size': size,
+      'data-active': isActive,
+      ...restButtonProps,
+    };
+    
+    const buttonContent = <>{children}</>;
 
-    if (!tooltip) {
-      return linkedElement;
-    }
+    let coreInteractiveElement;
 
-    const tooltipContentProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
-
-    if (!hasMounted || isMobile || (state === "expanded" && !isMobile)) {
-      return linkedElement; 
+    if (href) {
+      // Let NextLink render the <a> tag.
+      // Pass commonProps (especially className for styling) to NextLink.
+      // NextLink will apply these to its rendered <a> tag.
+      // The ref should also go to NextLink, which forwards it to the <a>.
+      coreInteractiveElement = (
+        <NextLink href={href} {...commonProps} ref={ref as React.Ref<HTMLAnchorElement>} legacyBehavior={false}>
+          {buttonContent}
+        </NextLink>
+      );
+    } else {
+      // Not a link, render as Comp (button or Slot if asChild was true for SidebarMenuButton)
+      coreInteractiveElement = (
+        <Comp {...commonProps} ref={ref as React.Ref<HTMLButtonElement>}>
+          {buttonContent}
+        </Comp>
+      );
     }
     
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{linkedElement}</TooltipTrigger>
-        <TooltipContent
-          side="right"
-          align="center"
-          {...tooltipContentProps}
-        />
-      </Tooltip>
-    );
+    const shouldShowTooltip = tooltip && hasMounted && !isMobile && state === "collapsed";
+
+    if (shouldShowTooltip) {
+      const tooltipContentProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {/* TooltipTrigger asChild will pass its props to coreInteractiveElement (NextLink or button) */}
+            {coreInteractiveElement}
+          </TooltipTrigger>
+          <TooltipContent side="right" align="center" {...tooltipContentProps} />
+        </Tooltip>
+      );
+    }
+    
+    return coreInteractiveElement;
   }
 );
 SidebarMenuButton.displayName = "SidebarMenuButton"
