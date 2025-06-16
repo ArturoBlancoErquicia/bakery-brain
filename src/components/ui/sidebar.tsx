@@ -71,25 +71,31 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+    // Initialize state with defaultOpen for SSR and initial client render
     const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
 
     const isControlled = openProp !== undefined && setOpenProp !== undefined;
     const open = isControlled ? openProp : internalOpen;
     
     React.useEffect(() => {
-      if (!isControlled) {
+      // On the client, after hydration, read the cookie and update if necessary
+      // Only for uncontrolled component
+      if (!isControlled && typeof document !== 'undefined') {
         const cookieValue = document.cookie
           .split("; ")
           .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
           ?.split("=")[1];
         if (cookieValue !== undefined) {
             const cookieOpenState = cookieValue === "true";
-            if (internalOpen !== cookieOpenState) {
-                 setInternalOpen(cookieOpenState);
+            // Only update if different from initial/default to avoid unnecessary re-renders
+             if (internalOpen !== cookieOpenState) {
+                setInternalOpen(cookieOpenState);
             }
         }
       }
-    }, [isControlled, internalOpen]); // Effect for reading cookie only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isControlled, defaultOpen]);
+
 
     const setOpenState = React.useCallback(
       (value: boolean | ((prevOpen: boolean) => boolean)) => {
@@ -553,19 +559,29 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-type AnchorProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>;
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+type SidebarMenuButtonProps = Omit<
+  React.AnchorHTMLAttributes<HTMLAnchorElement> &
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" // Omit children from here as we'll define it for our component
+> &
+  VariantProps<typeof sidebarMenuButtonVariants> & {
+    isActive?: boolean
+    tooltip?:
+      | string
+      | (Omit<
+          React.ComponentProps<typeof TooltipContent>,
+          "children" | "asChild"
+        > & { children: React.ReactNode })
+    href?: string
+    children: React.ReactNode // Define children here
+    className?: string
+    // No asChild prop needed here directly, it's handled internally by TooltipTrigger
+  }
 
-type SidebarMenuButtonProps = Omit<AnchorProps & ButtonProps, 'children'> & {
-  isActive?: boolean;
-  tooltip?: string | Omit<React.ComponentProps<typeof TooltipContent>, 'children' | 'asChild'> & { children: React.ReactNode };
-  href?: string;
-  children: React.ReactNode;
-  className?: string;
-} & VariantProps<typeof sidebarMenuButtonVariants>;
-
-
-const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
+const SidebarMenuButton = React.forwardRef<
+  HTMLElement, // Can be HTMLAnchorElement or HTMLButtonElement
+  SidebarMenuButtonProps
+>(
   (
     {
       className: propClassName,
@@ -573,75 +589,77 @@ const SidebarMenuButton = React.forwardRef<HTMLElement, SidebarMenuButtonProps>(
       size,
       tooltip,
       href,
-      children: buttonContentChildren,
+      children: buttonContent, // Renamed to avoid conflict
       isActive = false,
-      type: buttonType,
+      type: buttonType, // For the <button> element
       ...restButtonProps
     },
     ref
   ) => {
-    const { isMobile, state: sidebarState } = useSidebar();
-    const [hasMounted, setHasMounted] = React.useState(false);
+    const [hasMounted, setHasMounted] = React.useState(false)
+    const { isMobile, state: sidebarState } = useSidebar()
 
     React.useEffect(() => {
-      setHasMounted(true);
-    }, []);
+      setHasMounted(true)
+    }, [])
 
-    const derivedProps = {
-      className: cn(sidebarMenuButtonVariants({ variant, size, className: propClassName })),
-      'data-sidebar': "menu-button" as const,
-      'data-size': size,
-      'data-active': isActive,
-    };
+    const commonProps = {
+      className: cn(
+        sidebarMenuButtonVariants({ variant, size, className: propClassName })
+      ),
+      "data-sidebar": "menu-button" as const,
+      "data-size": size,
+      "data-active": isActive,
+      ...restButtonProps,
+    }
 
-    const visualContent = <>{buttonContentChildren}</>;
-
-    let interactiveElement: JSX.Element;
+    let interactiveElement: JSX.Element
+    const commonRef = ref as any; // Simplified ref handling for now
 
     if (href) {
+      // Modern NextLink, renders its own <a>
+      // Pass commonProps and the ref directly to NextLink
       interactiveElement = (
-        <NextLink href={href} passHref legacyBehavior>
-          <a
-            ref={ref as React.Ref<HTMLAnchorElement>}
-            {...derivedProps}
-            {...restButtonProps}
-          >
-            {visualContent}
-          </a>
+        <NextLink href={href} {...commonProps} ref={commonRef}>
+          {buttonContent}
         </NextLink>
       );
     } else {
       interactiveElement = (
-        <button
-          type={buttonType || 'button'}
-          ref={ref as React.Ref<HTMLButtonElement>}
-          {...derivedProps}
-          {...restButtonProps}
-        >
-          {visualContent}
+        <button type={buttonType || 'button'} {...commonProps} ref={commonRef}>
+          {buttonContent}
         </button>
       );
     }
+    
+    const shouldShowTooltip =
+      tooltip && hasMounted && !isMobile && sidebarState === "collapsed"
 
-    const shouldShowFullTooltip = tooltip && hasMounted && !isMobile && sidebarState === "collapsed";
-
-    if (shouldShowFullTooltip) {
-      const tooltipContentProps = typeof tooltip === "string" ? { children: tooltip } : tooltip;
+    if (shouldShowTooltip) {
+      const tooltipContentProps =
+        typeof tooltip === "string" ? { children: tooltip } : tooltip
       return (
         <Tooltip defaultOpen={false}>
           <TooltipTrigger asChild>
+            {/* TooltipTrigger asChild will correctly clone interactiveElement (NextLink or button)
+                and pass its props like data-state.
+            */}
             {interactiveElement}
           </TooltipTrigger>
           {tooltipContentProps && (
-            <TooltipContent side="right" align="center" {...tooltipContentProps} />
+            <TooltipContent
+              side="right"
+              align="center"
+              {...tooltipContentProps}
+            />
           )}
         </Tooltip>
-      );
+      )
     }
 
-    return interactiveElement;
+    return interactiveElement
   }
-);
+)
 SidebarMenuButton.displayName = "SidebarMenuButton"
 
 
@@ -812,3 +830,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
