@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import SalesTrendsChart from '@/components/dashboard/sales-trends-chart';
 import InventoryLevelsChart from '@/components/dashboard/inventory-levels-chart';
@@ -21,7 +22,24 @@ const storeOptions = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [selectedStore, setSelectedStore] = useState<string>("global");
+
+  useEffect(() => {
+    const storeQuery = searchParams.get('store');
+    if (storeQuery && storeOptions.some(opt => opt.value === storeQuery)) {
+      setSelectedStore(storeQuery);
+    } else {
+      setSelectedStore("global"); // Default to global if query is invalid or not present
+    }
+  }, [searchParams]);
+
+  const handleStoreChange = (newStoreId: string) => {
+    setSelectedStore(newStoreId);
+    router.push(`/dashboard?store=${newStoreId}`, { scroll: false });
+  };
 
   const summaryStats = [
     { title: "Ventas Totales (Mes, Global)", value: "$73,520", icon: DollarSign, change: "+6.1%", changeType: "positive" as const, description: "Comparado con el mes pasado." },
@@ -35,8 +53,9 @@ export default function DashboardPage() {
     return store ? store.label : "Desconocida";
   };
   
-  const currentStoreName = selectedStore === "global" ? "Global" : getStoreName(selectedStore);
-  const currentStoreSuffix = selectedStore === "global" ? "(Global)" : `(${getStoreName(selectedStore)})`;
+  const currentStoreNameForDisplay = getStoreName(selectedStore);
+  const currentStoreSuffix = selectedStore === "global" ? "(Global)" : `(${currentStoreNameForDisplay})`;
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,12 +65,12 @@ export default function DashboardPage() {
           <p className="text-muted-foreground font-body">
             {selectedStore === "global" 
               ? "Una vista consolidada del rendimiento de todas las panaderías." 
-              : `Mostrando datos para: ${getStoreName(selectedStore)}.`}
+              : `Mostrando datos para: ${currentStoreNameForDisplay}.`}
           </p>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
            <Filter className="h-5 w-5 text-muted-foreground" />
-          <Select value={selectedStore} onValueChange={setSelectedStore}>
+          <Select value={selectedStore} onValueChange={handleStoreChange}>
             <SelectTrigger className="w-full md:w-[280px]">
               <SelectValue placeholder="Seleccionar tienda" />
             </SelectTrigger>
@@ -90,7 +109,7 @@ export default function DashboardPage() {
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
             <CardTitle>Tendencias de Ventas {currentStoreSuffix}</CardTitle>
-            <CardDescription>Resumen semanal de ventas de los últimos 3 meses para {currentStoreName.toLowerCase()}.</CardDescription>
+            <CardDescription>Resumen semanal de ventas de los últimos 3 meses para {selectedStore === "global" ? "global" : currentStoreNameForDisplay.toLowerCase()}.</CardDescription>
           </CardHeader>
           <CardContent>
             <SalesTrendsChart />
@@ -99,7 +118,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Niveles de Inventario {currentStoreSuffix}</CardTitle>
-            <CardDescription>Stock actual de los productos principales para {currentStoreName.toLowerCase()}.</CardDescription>
+            <CardDescription>Stock actual de los productos principales para {selectedStore === "global" ? "global" : currentStoreNameForDisplay.toLowerCase()}.</CardDescription>
           </CardHeader>
           <CardContent>
             <InventoryLevelsChart />
@@ -108,7 +127,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Efectividad de Precios {currentStoreSuffix}</CardTitle>
-            <CardDescription>Resumen de precios y márgenes de artículos clave para {currentStoreName.toLowerCase()}.</CardDescription>
+            <CardDescription>Resumen de precios y márgenes de artículos clave para {selectedStore === "global" ? "global" : currentStoreNameForDisplay.toLowerCase()}.</CardDescription>
           </CardHeader>
           <CardContent>
             <PricingEffectivenessChart />
