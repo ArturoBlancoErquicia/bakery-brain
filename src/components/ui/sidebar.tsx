@@ -573,7 +573,7 @@ const SidebarMenuButton = React.forwardRef<
     );
 
     const linkedElement = href ? (
-      <NextLink href={href} passHref legacyBehavior={false}>
+      <NextLink href={href} asChild>
         {coreElement}
       </NextLink>
     ) : coreElement;
@@ -584,23 +584,16 @@ const SidebarMenuButton = React.forwardRef<
 
     const tooltipContentProps = typeof tooltip === 'string' ? { children: tooltip } : tooltip;
 
-    // Conditions for not showing tooltip:
-    // 1. Not mounted yet (SSR or initial client render)
-    // 2. On mobile
-    // 3. On desktop, but sidebar is expanded
-    // Tooltip should only appear on desktop when sidebar is collapsed.
     if (!hasMounted || isMobile || (state === "expanded" && !isMobile)) {
-      return linkedElement; // Render without Tooltip wrapper
+      return linkedElement; 
     }
     
-    // Only render with Tooltip if on desktop, sidebar is collapsed, and component has mounted
     return (
       <Tooltip>
         <TooltipTrigger asChild>{linkedElement}</TooltipTrigger>
         <TooltipContent
           side="right"
           align="center"
-          // No custom 'hidden' prop, Radix handles visibility
           {...tooltipContentProps}
         />
       </Tooltip>
@@ -776,4 +769,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
