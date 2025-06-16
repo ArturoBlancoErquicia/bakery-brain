@@ -1,12 +1,14 @@
+
 "use client";
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, PackageSearch, ShoppingCart, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, PackageSearch, ShoppingCart, CheckCircle2, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StockAlertItemProps {
+  storeId: string;
   productName: string;
   currentStock: number;
   reorderPoint: number;
@@ -45,7 +47,7 @@ const statusConfig = {
   }
 };
 
-export default function StockAlertItem({ productName, currentStock, reorderPoint, suggestedReorderQty, status }: StockAlertItemProps) {
+export default function StockAlertItem({ storeId, productName, currentStock, reorderPoint, suggestedReorderQty, status }: StockAlertItemProps) {
   const config = statusConfig[status];
   const IconComponent = config.icon;
 
@@ -56,7 +58,9 @@ export default function StockAlertItem({ productName, currentStock, reorderPoint
           <IconComponent className={cn("h-6 w-6", config.color)} />
           <CardTitle className={cn("text-lg font-headline", config.color)}>{productName}</CardTitle>
         </div>
-         <CardDescription className="font-body pt-1">{config.title}</CardDescription>
+         <CardDescription className="font-body pt-1 flex items-center">
+            <Store className="h-3.5 w-3.5 mr-1 text-muted-foreground"/> Tienda: {storeId} - {config.title}
+         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4 space-y-2 font-body">
         <div className="flex justify-between text-sm">

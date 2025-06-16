@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -7,16 +8,18 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // Label not used directly, but good to keep if needed
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { getSalesInsights, type CombinedSalesDataInput, type CombinedSalesDataOutput } from '@/lib/actions/bakery-actions';
 import ForecastResults from './forecast-results';
 import StockOptimizationSuggestion from './stock-optimization-suggestion';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 const formSchema = z.object({
+  storeId: z.string().min(1, { message: "Debes seleccionar una tienda." }),
   productName: z.string().min(2, { message: "El nombre del producto debe tener al menos 2 caracteres." }),
   pastSalesData: z.string().refine((data) => {
     try {
@@ -42,6 +45,16 @@ const formSchema = z.object({
 
 type SalesForecastFormValues = z.infer<typeof formSchema>;
 
+// Mock store IDs - in a real app, these would come from a DB or config
+const storeOptions = [
+  { value: "S001", label: "Tienda Principal (S001)" },
+  { value: "S002", label: "Sucursal Centro (S002)" },
+  { value: "S003", label: "Sucursal Norte (S003)" },
+  { value: "S004", label: "Panadería Oeste (S004)" },
+  { value: "S005", label: "Punto Sur (S005)" },
+  { value: "S006", label: "Kiosko Este (S006)" },
+];
+
 export default function SalesForecastForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<CombinedSalesDataOutput | null>(null);
@@ -50,6 +63,7 @@ export default function SalesForecastForm() {
   const form = useForm<SalesForecastFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      storeId: "",
       productName: "",
       pastSalesData: `[{"date": "2024-05-01", "quantity": 10}, {"date": "2024-05-08", "quantity": 12}]`,
       promotions: "",
@@ -64,6 +78,7 @@ export default function SalesForecastForm() {
     setResults(null);
     try {
       const data: CombinedSalesDataInput = {
+        storeId: values.storeId,
         productName: values.productName,
         pastSalesData: values.pastSalesData,
         promotions: values.promotions,
@@ -100,6 +115,30 @@ export default function SalesForecastForm() {
           <div className="grid md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
+              name="storeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tienda</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona una tienda" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {storeOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="productName"
               render={({ field }) => (
                 <FormItem>
@@ -111,7 +150,9 @@ export default function SalesForecastForm() {
                 </FormItem>
               )}
             />
-            <FormField
+          </div>
+          
+           <FormField
               control={form.control}
               name="productCategory"
               render={({ field }) => (
@@ -124,7 +165,6 @@ export default function SalesForecastForm() {
                 </FormItem>
               )}
             />
-          </div>
           
           <FormField
             control={form.control}
@@ -140,7 +180,7 @@ export default function SalesForecastForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Proporciona datos históricos de ventas en formato JSON.
+                  Proporciona datos históricos de ventas en formato JSON para el producto y tienda seleccionados.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -209,8 +249,8 @@ export default function SalesForecastForm() {
 
       {results && !results.error && (
         <div className="mt-8 space-y-6">
-          {results.forecast && <ForecastResults forecast={results.forecast} productName={form.getValues("productName")} />}
-          {results.optimization && <StockOptimizationSuggestion optimization={results.optimization} />}
+          {results.forecast && <ForecastResults forecast={results.forecast} productName={form.getValues("productName")} storeId={form.getValues("storeId")} />}
+          {results.optimization && <StockOptimizationSuggestion optimization={results.optimization} storeId={form.getValues("storeId")} />}
         </div>
       )}
     </>

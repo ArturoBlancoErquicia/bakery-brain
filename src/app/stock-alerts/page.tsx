@@ -1,15 +1,19 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import StockAlertItem from '@/components/stock-alerts/stock-alert-item';
 import { AlertTriangle, PackageSearch, ShoppingCart } from 'lucide-react';
 
-// Mock data for stock alerts
+// Mock data for stock alerts including storeId
 const mockAlerts = [
-  { id: '1', productName: 'Pan de Masa Madre', currentStock: 8, reorderPoint: 10, suggestedReorderQty: 20, status: 'low' as const },
-  { id: '2', productName: 'Croissants de Almendra', currentStock: 5, reorderPoint: 15, suggestedReorderQty: 30, status: 'critical' as const },
-  { id: '3', productName: 'Pan Integral', currentStock: 22, reorderPoint: 20, suggestedReorderQty: 25, status: 'reorder' as const },
-  { id: '4', productName: 'Muffins de Arándano', currentStock: 12, reorderPoint: 25, suggestedReorderQty: 40, status: 'ok' as const }, // Example of ok stock
-  { id: '5', productName: 'Eclairs de Chocolate', currentStock: 3, reorderPoint: 10, suggestedReorderQty: 20, status: 'critical' as const },
+  { id: '1', storeId: 'S001', productName: 'Pan de Masa Madre', currentStock: 8, reorderPoint: 10, suggestedReorderQty: 20, status: 'low' as const },
+  { id: '2', storeId: 'S002', productName: 'Croissants de Almendra', currentStock: 5, reorderPoint: 15, suggestedReorderQty: 30, status: 'critical' as const },
+  { id: '3', storeId: 'S001', productName: 'Pan Integral', currentStock: 22, reorderPoint: 20, suggestedReorderQty: 25, status: 'reorder' as const },
+  { id: '4', storeId: 'S003', productName: 'Muffins de Arándano', currentStock: 12, reorderPoint: 25, suggestedReorderQty: 40, status: 'ok' as const },
+  { id: '5', storeId: 'S002', productName: 'Eclairs de Chocolate', currentStock: 3, reorderPoint: 10, suggestedReorderQty: 20, status: 'critical' as const },
+  { id: '6', storeId: 'S004', productName: 'Baguette Rústica', currentStock: 7, reorderPoint: 12, suggestedReorderQty: 25, status: 'low' as const },
+  { id: '7', storeId: 'S005', productName: 'Pan de Centeno', currentStock: 18, reorderPoint: 15, suggestedReorderQty: 20, status: 'reorder' as const },
+  { id: '8', storeId: 'S006', productName: 'Galletas de Jengibre', currentStock: 2, reorderPoint: 5, suggestedReorderQty: 15, status: 'critical' as const },
 ];
 
 export default function StockAlertsPage() {
@@ -22,7 +26,7 @@ export default function StockAlertsPage() {
       <header>
         <h1 className="text-3xl font-bold font-headline">Alertas de Stock</h1>
         <p className="text-muted-foreground font-body">
-          Monitorea los niveles de inventario y recibe sugerencias de reorden oportunas.
+          Monitorea los niveles de inventario por tienda y recibe sugerencias de reorden oportunas.
         </p>
       </header>
 

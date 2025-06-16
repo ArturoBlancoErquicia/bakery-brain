@@ -23,7 +23,6 @@ const formSchema = z.object({
 
 type DataUploadFormValues = z.infer<typeof formSchema>;
 
-// Expected headers based on SYSTEM_DESIGN.md section 2.1 (Datos de POS)
 const EXPECTED_HEADERS = [
   "transaction_id", "timestamp", "store_id", "product_id", 
   "quantity_sold", "price_unit", "total_amount", "promotion_applied_id"
@@ -45,7 +44,9 @@ export default function DataUploadForm() {
       "\n" + 
       "T001,2023-01-15T10:30:00Z,S001,P001,2,3.50,7.00,PROMO01" +
       "\n" +
-      "T002,2023-01-15T10:32:00Z,S001,P002,1,2.75,2.75,";
+      "T002,2023-01-15T10:32:00Z,S001,P002,1,2.75,2.75," +
+      "\n" +
+      "T003,2023-01-15T10:35:00Z,S002,P001,3,3.50,10.50,";
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -73,9 +74,9 @@ export default function DataUploadForm() {
           return;
         }
 
-        const lines = text.split('\\n').map(line => line.trim()).filter(line => line);
-        if (lines.length < 2) { // At least one header row and one data row
-          setStatusMessage("El archivo CSV está vacío o no contiene suficientes datos.");
+        const lines = text.split(/\r\n|\n/).map(line => line.trim()).filter(line => line); // Handles both CRLF and LF
+        if (lines.length < 2) { 
+          setStatusMessage("El archivo CSV está vacío o no contiene suficientes datos (cabecera + al menos una fila).");
           setUploadStatus('error');
           setPreviewData(null);
           resolve(false);
@@ -94,9 +95,8 @@ export default function DataUploadForm() {
         }
 
         const dataRows = lines.slice(1, Math.min(6, lines.length)).map(line => line.split(',').map(cell => cell.trim()));
-        setPreviewData([headers, ...dataRows.slice(0,5)]); // Header + first 5 data rows for preview
+        setPreviewData([headers, ...dataRows.slice(0,5)]); 
         
-        // Simulate backend processing
         setTimeout(() => {
           setStatusMessage("Archivo procesado y validado exitosamente (simulación). Los datos estarían listos para ser incorporados y podrían usarse para reentrenar modelos.");
           setUploadStatus('success');
@@ -143,7 +143,7 @@ export default function DataUploadForm() {
       toast({
         variant: "destructive",
         title: "Error de Subida",
-        description: statusMessage,
+        description: statusMessage || "Ocurrió un error desconocido.",
       });
     } finally {
       setIsLoading(false);
@@ -241,4 +241,3 @@ export default function DataUploadForm() {
     </>
   );
 }
-

@@ -1,20 +1,25 @@
+
 "use client";
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PackageCheck, Lightbulb, AlignLeft } from 'lucide-react';
+import { PackageCheck, Lightbulb, AlignLeft, Store } from 'lucide-react';
 import type { SuggestStockOptimizationOutput } from '@/ai/flows/suggest-stock-optimization';
 
 interface StockOptimizationSuggestionProps {
   optimization: SuggestStockOptimizationOutput;
+  storeId: string;
 }
 
-export default function StockOptimizationSuggestion({ optimization }: StockOptimizationSuggestionProps) {
+export default function StockOptimizationSuggestion({ optimization, storeId }: StockOptimizationSuggestionProps) {
   return (
     <Card className="border-accent">
       <CardHeader>
         <CardTitle className="font-headline">Optimización de Stock para {optimization.product}</CardTitle>
-        <CardDescription className="font-body">Sugerencias impulsadas por IA para gestionar tu inventario.</CardDescription>
+        <CardDescription className="font-body flex items-center">
+            <Store className="h-4 w-4 mr-1.5 text-muted-foreground"/> 
+            Tienda: {storeId} - Sugerencias impulsadas por IA para gestionar tu inventario.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center p-4 bg-background rounded-lg shadow">
