@@ -117,4 +117,3 @@ export default function ManufacturingOrderItem({ order, onStatusChange }: Manufa
     </Card>
   );
 }
-```
