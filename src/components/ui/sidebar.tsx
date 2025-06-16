@@ -539,7 +539,7 @@ const SidebarMenuButton = React.forwardRef<
 >(
   (
     {
-      asChild = false,
+      asChild: sbAsChild = false,
       isActive = false,
       variant = "default",
       size = "default",
@@ -547,11 +547,11 @@ const SidebarMenuButton = React.forwardRef<
       className,
       href,
       children,
-      ...props
+      ...restButtonProps
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button";
+    const Comp = sbAsChild ? Slot : "button";
     const { isMobile, state } = useSidebar();
     const [hasMounted, setHasMounted] = React.useState(false);
 
@@ -559,14 +559,14 @@ const SidebarMenuButton = React.forwardRef<
       setHasMounted(true);
     }, []);
 
-    const coreElement = (
+    const actualButtonElement = (
       <Comp
         ref={ref}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size, className }))}
-        {...props}
+        {...restButtonProps}
       >
         {children}
       </Comp>
@@ -574,9 +574,9 @@ const SidebarMenuButton = React.forwardRef<
 
     const linkedElement = href ? (
       <NextLink href={href} asChild>
-        {coreElement}
+        <Slot>{actualButtonElement}</Slot>
       </NextLink>
-    ) : coreElement;
+    ) : actualButtonElement;
 
     if (!tooltip) {
       return linkedElement;
