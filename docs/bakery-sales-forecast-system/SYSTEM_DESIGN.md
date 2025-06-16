@@ -162,7 +162,7 @@ graph TD
 
 *   **Datos de POS (Point of Sale)**:
     *   Esquema: `(transaction_id, timestamp, store_id, product_id, quantity_sold, price_unit, total_amount, promotion_applied_id)`
-    *   Fuente: Exportaciones diarias/API del sistema POS de cada panadería.
+    *   Fuente: Exportaciones diarias/API del sistema POS de cada panadería. **Una vez procesados, estos datos de ventas deben utilizarse para actualizar los niveles de inventario en tiempo real o cuasi real.**
 *   **Datos de Inventario**:
     *   Esquema: `(snapshot_timestamp, store_id, product_id, current_stock, stock_unit)`
     *   Fuente: Sistema de gestión de inventario (si existe) o reportes manuales.
@@ -541,7 +541,7 @@ El diagrama de arquitectura lógica se proporcionó en la sección 1.1.
 *   **Versionado en Data Lake**: Los archivos Parquet se almacenan en una ubicación específica del Data Lake (e.g., `gs://bucket/processed_data/manual_uploads/YYYY/MM/DD/file_v1.parquet`).
     *   Cada carga genera una nueva versión o un nuevo conjunto de archivos.
     *   Metadatos de la carga (quién cargó, cuándo, nombre original del archivo, resultado de validación) se almacenan también.
-*   **Integración con ETL**: La nueva carga debe ser incorporada por el siguiente ciclo ETL para actualizar el Feature Store.
+*   **Integración con ETL**: La nueva carga debe ser incorporada por el siguiente ciclo ETL para actualizar el Feature Store. **Es crucial que, en un sistema de producción, los datos de ventas cargados (especialmente si representan ventas recientes) también se utilicen para ajustar los niveles de inventario correspondientes a los productos vendidos en cada tienda.**
 
 ### 8.5. Disparador de Reentrenamiento (Automático Opcional)
 
@@ -565,5 +565,3 @@ El diagrama de arquitectura lógica se proporcionó en la sección 1.1.
     *   **Auditoría**: Todas estas operaciones deben ser auditadas.
 ---
 Este diseño es un punto de partida. Cada sección podría expandirse en documentos más detallados.
-```
-
