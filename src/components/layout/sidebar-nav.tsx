@@ -2,10 +2,10 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
+// Removed import of Link from 'next/link' as SidebarMenuButton will handle it
 import { usePathname, useSearchParams } from 'next/navigation';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { LayoutDashboard, TrendingUp, Archive, FileUp, Store, ClipboardList } from 'lucide-react'; // Added Store icon, ClipboardList
+import { LayoutDashboard, TrendingUp, Archive, FileUp, Store, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const mainDashboardItem = { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard, type: 'main-dashboard', id: 'main-dashboard' };
@@ -58,19 +58,19 @@ export default function SidebarNav() {
 
         return (
           <SidebarMenuItem key={item.id}>
-            <Link href={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive}
-                tooltip={{ children: item.label, className: "font-body" }}
-                className="font-body"
-              >
-                <a>
-                  <IconComponent />
-                  <span>{item.label}</span>
-                </a>
-              </SidebarMenuButton>
-            </Link>
+            {/* Removed outer Link component */}
+            <SidebarMenuButton
+              href={item.href} // Pass href directly to SidebarMenuButton
+              asChild
+              isActive={isActive}
+              tooltip={{ children: item.label, className: "font-body" }}
+              className="font-body"
+            >
+              <a> {/* This 'a' tag is now correctly handled by the inner NextLink via Slot */}
+                <IconComponent />
+                <span>{item.label}</span>
+              </a>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         );
       })}
