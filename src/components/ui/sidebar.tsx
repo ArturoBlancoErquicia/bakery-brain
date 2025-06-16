@@ -71,23 +71,19 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
-    // Initialize state with defaultOpen for SSR and initial client render
     const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
 
     const isControlled = openProp !== undefined && setOpenProp !== undefined;
     const open = isControlled ? openProp : internalOpen;
     
     React.useEffect(() => {
-      // On the client, after hydration, read the cookie and update if necessary
-      // Only for uncontrolled component
-      if (!isControlled && typeof document !== 'undefined') {
+      if (!isControlled) {
         const cookieValue = document.cookie
           .split("; ")
           .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
           ?.split("=")[1];
         if (cookieValue !== undefined) {
             const cookieOpenState = cookieValue === "true";
-            // Only update if different from initial/default to avoid unnecessary re-renders
              if (internalOpen !== cookieOpenState) {
                 setInternalOpen(cookieOpenState);
             }
@@ -104,9 +100,7 @@ const SidebarProvider = React.forwardRef<
           setOpenProp(newOpenState);
         } else {
           setInternalOpen(newOpenState);
-          if (typeof document !== 'undefined') {
-            document.cookie = `${SIDEBAR_COOKIE_NAME}=${newOpenState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-          }
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${newOpenState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
         }
       },
       [isControlled, open, setOpenProp]
@@ -538,7 +532,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -559,108 +553,31 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-type SidebarMenuButtonProps = Omit<
-  React.AnchorHTMLAttributes<HTMLAnchorElement> &
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
-  "children" // Omit children from here as we'll define it for our component
-> &
-  VariantProps<typeof sidebarMenuButtonVariants> & {
-    isActive?: boolean
-    tooltip?:
-      | string
-      | (Omit<
-          React.ComponentProps<typeof TooltipContent>,
-          "children" | "asChild"
-        > & { children: React.ReactNode })
-    href?: string
-    children: React.ReactNode // Define children here
-    className?: string
-    // No asChild prop needed here directly, it's handled internally by TooltipTrigger
-  }
+// Simplified SidebarMenuButton: Renders a div with styles and children.
+// It will be wrapped by NextLink or <button> in SidebarNav.
+// The `asChild` prop is no longer needed here as it will be handled by the wrapper.
+interface SidebarMenuButtonProps
+  extends React.HTMLAttributes<HTMLDivElement>, // Changed from HTMLElement
+    VariantProps<typeof sidebarMenuButtonVariants> {
+  // No href, onClick, isActive, or tooltip here. These are handled by the wrapper.
+}
 
 const SidebarMenuButton = React.forwardRef<
-  HTMLElement, // Can be HTMLAnchorElement or HTMLButtonElement
+  HTMLDivElement, // Specifically a div now
   SidebarMenuButtonProps
->(
-  (
-    {
-      className: propClassName,
-      variant,
-      size,
-      tooltip,
-      href,
-      children: buttonContent, // Renamed to avoid conflict
-      isActive = false,
-      type: buttonType, // For the <button> element
-      ...restButtonProps
-    },
-    ref
-  ) => {
-    const [hasMounted, setHasMounted] = React.useState(false)
-    const { isMobile, state: sidebarState } = useSidebar()
-
-    React.useEffect(() => {
-      setHasMounted(true)
-    }, [])
-
-    const commonProps = {
-      className: cn(
-        sidebarMenuButtonVariants({ variant, size, className: propClassName })
-      ),
-      "data-sidebar": "menu-button" as const,
-      "data-size": size,
-      "data-active": isActive,
-      ...restButtonProps,
-    }
-
-    let interactiveElement: JSX.Element
-    const commonRef = ref as any; // Simplified ref handling for now
-
-    if (href) {
-      // Modern NextLink, renders its own <a>
-      // Pass commonProps and the ref directly to NextLink
-      interactiveElement = (
-        <NextLink href={href} {...commonProps} ref={commonRef}>
-          {buttonContent}
-        </NextLink>
-      );
-    } else {
-      interactiveElement = (
-        <button type={buttonType || 'button'} {...commonProps} ref={commonRef}>
-          {buttonContent}
-        </button>
-      );
-    }
-    
-    const shouldShowTooltip =
-      tooltip && hasMounted && !isMobile && sidebarState === "collapsed"
-
-    if (shouldShowTooltip) {
-      const tooltipContentProps =
-        typeof tooltip === "string" ? { children: tooltip } : tooltip
-      return (
-        <Tooltip defaultOpen={false}>
-          <TooltipTrigger asChild>
-            {/* TooltipTrigger asChild will correctly clone interactiveElement (NextLink or button)
-                and pass its props like data-state.
-            */}
-            {interactiveElement}
-          </TooltipTrigger>
-          {tooltipContentProps && (
-            <TooltipContent
-              side="right"
-              align="center"
-              {...tooltipContentProps}
-            />
-          )}
-        </Tooltip>
-      )
-    }
-
-    return interactiveElement
-  }
-)
-SidebarMenuButton.displayName = "SidebarMenuButton"
+>(({ className, variant, size, children, ...props }, ref) => {
+  // All props (including data-active, data-sidebar from wrapper) will be applied here
+  return (
+    <div
+      ref={ref}
+      className={cn(sidebarMenuButtonVariants({ variant, size, className }))}
+      {...props} // Spread all other props, including those passed by asChild wrappers
+    >
+      {children}
+    </div>
+  );
+});
+SidebarMenuButton.displayName = "SidebarMenuButton";
 
 
 const SidebarMenuAction = React.forwardRef<
@@ -818,7 +735,7 @@ export {
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuBadge,
-  SidebarMenuButton,
+  SidebarMenuButton, // Exporting the simplified version
   SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarMenuSub,
@@ -830,4 +747,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
