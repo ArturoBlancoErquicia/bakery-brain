@@ -1,4 +1,4 @@
-# Firebase Studio
+cerebro de panaderia
 
 This is a NextJS starter in Firebase Studio.
 
