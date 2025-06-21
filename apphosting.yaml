@@ -1,6 +1,8 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# This comment is added to ensure change detection and resolve deployment issues.
+
 # The build command to be executed during deployment.
 build:
   command: 'npm install && npm run build'
