@@ -9,8 +9,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": "20"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
