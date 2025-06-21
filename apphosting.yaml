@@ -3,7 +3,7 @@
 
 # The build command to be executed during deployment.
 build:
-  command: 'npm run build'
+  command: 'npm install && npm run build'
   outputDir: '.next'
 
 # The start command to be executed to start your application.
