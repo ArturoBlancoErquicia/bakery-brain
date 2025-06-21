@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppLayout from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
-  title: 'Cerebro Pastelero',
+  title: 'Cerebro de Panaderia',
   description: 'Plataforma de pronóstico, optimización y análisis para pastelerías.',
 };
 
