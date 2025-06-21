@@ -1,18 +1,1 @@
-# Settings to manage and configure a Firebase App Hosting backend.
-# https://firebase.google.com/docs/app-hosting/configure
-
-# This comment is added to ensure change detection and resolve deployment issues.
-
-# The build command to be executed during deployment.
-build:
-  command: 'npm install && npm run build'
-  outputDir: '.next'
-
-# The start command to be executed to start your application.
-start:
-  command: 'npm run start'
-
-runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+# This file is intentionally neutralized to resolve build configuration conflicts.
